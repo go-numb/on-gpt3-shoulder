@@ -31,7 +31,6 @@ func init() {
 	}
 
 	APITOKEN = string(f)
-	fmt.Println(APITOKEN)
 }
 
 func main() {
@@ -40,7 +39,7 @@ func main() {
 	e.Static("/", "static")
 
 	client := &Client{
-		c:   gogpt.NewClient(""),
+		c:   gogpt.NewClient(APITOKEN),
 		ctx: context.Background(),
 	}
 
