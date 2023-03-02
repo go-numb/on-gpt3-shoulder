@@ -46,7 +46,7 @@ func main() {
 	api := e.Group("/api")
 
 	api.GET("", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, "ping")
+		return c.JSON(http.StatusOK, "pong")
 	})
 	api.POST("/", client.Request)
 
@@ -57,50 +57,52 @@ type Body struct {
 	Q string `json:"q"`
 }
 
+var (
+	chats []gogpt.ChatCompletionMessage
+)
+
 func (p *Client) Request(c echo.Context) error {
 	t := time.Now()
-	defer fmt.Printf("%fs\n", time.Since(t).Seconds())
+	defer fmt.Println(time.Since(t))
 
 	body := new(Body)
 	if err := c.Bind(body); err != nil {
 		return err
 	}
 
+	fmt.Println(body)
+
 	if body.Q == "" {
 		return c.JSON(http.StatusBadRequest, map[string]interface{}{"data": errors.New("has not query")})
 	}
 
-	req := gogpt.CompletionRequest{
-		Prompt:      fmt.Sprintf("%s。", body.Q),
-		Temperature: 0.6,
+	req := gogpt.ChatCompletionRequest{
 		// Model:            "text-ada-001",
-		Model:            "text-davinci-003",
-		MaxTokens:        400,
-		TopP:             1,
-		FrequencyPenalty: 0,
-		PresencePenalty:  0,
+		Model: gogpt.GPT3Dot5Turbo0301,
+		Messages: append(chats, gogpt.ChatCompletionMessage{
+			Role:    "user",
+			Content: fmt.Sprintf("%s。", body.Q),
+		}),
 	}
 
-	data := gogpt.CompletionResponse{}
-	for i := 0; i < 5; i++ {
-		res, err := p.c.CreateCompletion(p.ctx, req)
-		if err != nil {
-			return err
-		}
-
-		if res.Choices[0].FinishReason == "length" {
-			req.MaxTokens = int(float64(req.MaxTokens) * 1.5)
-			time.Sleep(2 * time.Second)
-			log.Printf("request times: %d", i+1)
-			continue
-		}
-
-		data = res
-		break
+	res, err := p.c.CreateChatCompletion(p.ctx, req)
+	if err != nil {
+		return err
 	}
 
-	data.Choices[0].Text = strings.Replace(data.Choices[0].Text, "\n\nA: ", "", 1)
-	data.Choices[0].Text = strings.Replace(data.Choices[0].Text, "A:", "", 1)
+	res.Choices[0].Message.Content = strings.Replace(res.Choices[0].Message.Content, "\n\nA: ", "", 1)
+	res.Choices[0].Message.Content = strings.Replace(res.Choices[0].Message.Content, "A:", "", 1)
 
-	return c.JSON(http.StatusOK, data)
+	chats = append(chats, gogpt.ChatCompletionMessage{
+		Role:    "user",
+		Content: body.Q,
+	})
+	chats = append(chats, gogpt.ChatCompletionMessage{
+		Role:    "assistant",
+		Content: res.Choices[0].Message.Content,
+	})
+
+	fmt.Printf("%#v\n", res)
+
+	return c.JSON(http.StatusOK, res)
 }

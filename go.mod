@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/labstack/echo/v4 v4.9.1
-	github.com/sashabaranov/go-gpt3 v0.0.0-20221202105456-0f9f4aa343ad
+	github.com/sashabaranov/go-gpt3 v1.3.0
 )
 
 require (

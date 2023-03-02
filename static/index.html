@@ -10,7 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
         dt {
-          font-weight: bold;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -18,8 +18,7 @@
 <body>
     <div id="app">
         <p>{{ message }}</p>
-        <textarea v-model="text"
-                rows="3" cols="56" autofocus>
+        <textarea v-model="text" rows="3" cols="56" autofocus>
         It was a dark and stormy night...
         </textarea>
         <br>
@@ -45,10 +44,11 @@
                 q() {
                     axios.post(
                         'http://localhost:8080/api/',
-                        {"q": this.text},
+                        { "q": this.text },
                     ).then((res) => {
                         console.log(res.data);
-                        this.items.push({'q': this.text, 'a': res.data.choices[0].text})
+                        this.items.push({ 'q': this.text, 'a': res.data.choices[0].message.content })
+                        this.text = ''
                     }).catch((err) => {
                         console.log(err);
                     })
